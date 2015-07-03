@@ -32,7 +32,7 @@ module Mongoid
         begin
           document.begin_validate
           valid = Array.wrap(value).collect do |doc|
-            if doc.nil? || doc.flagged_for_destroy?
+            if doc.nil? || doc.flagged_for_destroy? || !doc.validates_relation?
               true
             else
               doc.validated? ? true : doc.valid?
