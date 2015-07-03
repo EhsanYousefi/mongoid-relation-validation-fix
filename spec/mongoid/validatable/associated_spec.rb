@@ -1,4 +1,5 @@
 require "spec_helper"
+require "pry"
 
 describe Mongoid::Validatable::AssociatedValidator do
 
@@ -79,6 +80,27 @@ describe Mongoid::Validatable::AssociatedValidator do
 
       end
 
+      context "when the documents relation valdiation turned off" do
+
+        let(:user) do
+          User.new(name: "test")
+        end
+
+        let(:role) do
+          Role.new(name: "test")
+        end
+
+        before do
+          user.role = role
+        end
+
+        it "does not run validation on them" do
+          expect(role).to receive(:valid?).never
+          expect(user).to be_valid
+        end
+
+      end
+
     end
   end
 
@@ -108,7 +130,7 @@ describe Mongoid::Validatable::AssociatedValidator do
       context "when the association is valid" do
 
         let(:associated) do
-          double(valid?: true, flagged_for_destroy?: false)
+          double(valid?: true, flagged_for_destroy?: false, validates_relation?: true)
         end
 
         before do
@@ -124,7 +146,7 @@ describe Mongoid::Validatable::AssociatedValidator do
       context "when the association is invalid" do
 
         let(:associated) do
-          double(valid?: false, flagged_for_destroy?: false)
+          double(valid?: false, flagged_for_destroy?: false, validates_relation?: true)
         end
 
         before do
@@ -158,7 +180,7 @@ describe Mongoid::Validatable::AssociatedValidator do
       context "when the association has invalid documents" do
 
         let(:associated) do
-          double(valid?: false, flagged_for_destroy?: false)
+          double(valid?: false, flagged_for_destroy?: false, validates_relation?: true)
         end
 
         before do
@@ -171,14 +193,47 @@ describe Mongoid::Validatable::AssociatedValidator do
         end
       end
 
+      context "when the association validation switched off" do
+
+        let(:associated) do
+          double(valid?: false, flagged_for_destroy?: false, validates_relation?: false)
+        end
+
+        before do
+          expect(associated).to_not receive(:validated?)
+          validator.validate_each(person, :addresses, [ associated ])
+        end
+
+        it "adds errors to the parent document" do
+          expect(person.errors[:addresses]).to be_empty
+        end
+      end
+
       context "when the assocation has all valid documents" do
 
         let(:associated) do
-          double(valid?: true, flagged_for_destroy?: false)
+          double(valid?: true, flagged_for_destroy?: false, validates_relation?: true)
         end
 
         before do
           expect(associated).to receive(:validated?).and_return(false)
+          validator.validate_each(person, :addresses, [ associated ])
+        end
+
+        it "adds no errors" do
+          expect(person.errors[:addresses]).to be_empty
+        end
+      end
+
+
+      context "when the assocation has all valid documents and association validation switched off" do
+
+        let(:associated) do
+          double(valid?: true, flagged_for_destroy?: false, validates_relation?: false)
+        end
+
+        before do
+          expect(associated).to_not receive(:validated?)
           validator.validate_each(person, :addresses, [ associated ])
         end
 
