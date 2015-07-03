@@ -1,0 +1,29 @@
+language: ruby
+
+services: mongodb
+
+bundler_args: --without development
+
+rvm:
+  - 1.9.3
+  - 2.0.0
+  - 2.1
+  - 2.2
+  - jruby
+
+gemfile:
+  - Gemfile
+  - gemfiles/rails41.gemfile
+  - gemfiles/rails42.gemfile
+
+env: JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
+
+sudo: false
+
+notifications:
+  email: false
+  irc:
+    on_success: change
+    on_failure: always
+    channels:
+      - "irc.freenode.org#mongoid"
